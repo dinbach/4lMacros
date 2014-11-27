@@ -1,118 +1,171 @@
+#include <TH2F.h>
+#include <TFile.h>
+#include <TGraph.h>
+#include <TCanvas.h>
+#include <TLegend.h>
+#include <TMultiGraph.h>
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <sstream>
+#include <TROOT.h>
+#include <TSystem.h>
+#include <vector>
+#include <map>
+#include <TColor.h>
+#include "TRint.h"
+#include "TStyle.h"
+#include "TLatex.h"
+
+using namespace std;
+int getLineColor(string channel);
+void drawFF();
+
+
+// string BaseWorkDir = "/Users/kbachas/WORK/4lInclusive/FF_12_11/";
+string BaseWorkDir = "/Users/kbachas/WORK/4lInclusive/24_11_2014_FFBackground/";
+
+string inputdir = BaseWorkDir+"OutputFiles/";
+string outdir   = BaseWorkDir+"Plots/";
+
+string binScheme = "_down5gev";
+// string binScheme     = "_less1";
+// string controlSample = "";
+string controlSample = "_ttbarcs";
+
+map<string,TFile*> fileMap;
+
+map<string,TH2F*> pt_eta_centralmu_FF;
+map<string,TH2F*> pt_eta_forwmu_FF;
+map<string,TH2F*> pt_eta_calomu_FF;
+map<string,TH2F*> pt_eta_centralel_FF;
+
+map<string,TH1F*> pt_centralmu_FF;
+map<string,TH1F*> pt_forwmu_FF;
+map<string,TH1F*> pt_calomu_FF;
+map<string,TH1F*> pt_centralel_FF;
+
+map<string,TH1F*> eta_centralmu_FF;
+map<string,TH1F*> eta_forwmu_FF;
+map<string,TH1F*> eta_calomu_FF;
+map<string,TH1F*> eta_centralel_FF;
+
+
+const Int_t NRGBs = 5;
+const Int_t NCont = 255;
+
+
+Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
+Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
+Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
+Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };
+
+void drawFF()
 {
-  // string outdir = "";
-  // string inputdir = "";
-  string outdir = "../OutputPlots/";
-  string inputdir = "../OutputFiles/";
-  gROOT->ProcessLine("#include <vector>");
-  gROOT->ProcessLine("#include <string>");
   gROOT->ProcessLine(".x doAtlasStyle.C");
+  gStyle->SetPaintTextFormat("4.2f");
 
-  TFile *f[3];
-  f[0] = TFile::Open((inputdir+"hists_FF_data.root").c_str());
-  TH1::AddDirectory(kTRUE);
-  f[1] = TFile::Open((inputdir+"hists_FF_ZplusJets.root").c_str());
-  TH1::AddDirectory(kTRUE);
-  f[2] = TFile::Open((inputdir+"hists_FF_SherpaZplusJets.root").c_str());
-  TH1::AddDirectory(kTRUE);
-
-  string elrecotype[1] = {"central"};
-  string murecotype[3] = {"central","forw","calo"};
-  int netypes = sizeof( elrecotype)/sizeof(elrecotype[0]);
-  int nmutypes = sizeof( murecotype)/sizeof(murecotype[0]);
-
-  const int nFiles=3; //data +mc1 +mc2
-  TH1F *pt_mu_FF[3][nFiles];
-  TH1F *eta_mu_FF[3][nFiles];
-  TH1F *pt_el_FF[1][nFiles];
-  TH1F *eta_el_FF[1][nFiles];
-
-  TH2F *pt_eta_el_FF[3][nFiles];
-  TH2F *pt_eta_mu_FF[3][nFiles];
-
-  for (int ifile=0;ifile<nFiles;ifile++) {
-    for (int i=0;i<nmutypes;i++) {
-      pt_mu_FF[i][ifile] = (TH1F*) (f[ifile]->Get(Form("pt_%smu_FF",murecotype[i].c_str())))->Clone(Form("pt_%smu_FF_DATA",murecotype[i].c_str()));
-      pt_mu_FF[i][ifile]->SetYTitle("fake factor");
-      eta_mu_FF[i][ifile] = (TH1F*) (f[ifile]->Get(Form("eta_%smu_FF",murecotype[i].c_str())))->Clone(Form("eta_%smu_FF_DATA",murecotype[i].c_str()));
-      eta_mu_FF[i][ifile]->SetYTitle("fake factor");
-
-    }
-    for (int i=0;i<netypes;i++) {
-      pt_el_FF[i][ifile] = (TH1F*) (f[ifile]->Get(Form("pt_%sel_FF",elrecotype[i].c_str())))->Clone(Form("pt_%sel_FF_DATA",elrecotype[i].c_str()));
-      pt_el_FF[i][ifile]->SetYTitle("fake factor");
-      eta_el_FF[i][ifile] = (TH1F*) (f[ifile]->Get(Form("eta_%sel_FF",elrecotype[i].c_str())))->Clone(Form("eta_%sel_FF_DATA",elrecotype[i].c_str()));
-      eta_el_FF[i][ifile]->SetYTitle("fake factor");
-    }
-  }
-
-  for (int i=0;i<nmutypes;i++)
-  {
-    pt_eta_mu_FF[i][0] = (TH2F*) (f[0]->Get(Form("pt_eta_%smu_FF",murecotype[i].c_str())))->Clone(Form("pt_eta_%smu_FF_DATA",murecotype[i].c_str()));
-    pt_eta_mu_FF[i][0]->SetYTitle("fake factor");
-  }
-
-  for (int i=0;i<netypes;i++) {
-    pt_eta_el_FF[i][0] = (TH2F*) (f[0]->Get(Form("pt_eta_%sel_FF",elrecotype[i].c_str())))->Clone(Form("pt_eta_%sel_FF_DATA",elrecotype[i].c_str()));
-    pt_eta_el_FF[i][0]->SetYTitle("fake factor");
-  }
-
-
-  const Int_t NRGBs = 5;
-  const Int_t NCont = 255;
-
-  Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
-  Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
-  Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
-  Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };
   TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
   gStyle->SetNumberContours(NCont);
   gStyle->SetOptStat(0);
 
+  fileMap["DATA"]          = new TFile((inputdir+"hists_FF_data"+binScheme+controlSample+".root").c_str());
+  // fileMap["ZjetsSherpa"]   = new TFile((inputdir+"hists_FF_ZjetsSherpa"+binScheme+controlSample+".root").c_str());
+  // fileMap["ZjetsAlpgenHF"] = new TFile((inputdir+"hists_FF_ZjetsAlpgen_HF"+binScheme+controlSample+".root").c_str());
+  // fileMap["ZjetsAlpgenLF"] = new TFile((inputdir+"hists_FF_ZjetsAlpgen_LF"+binScheme+controlSample+".root").c_str());
+  // fileMap["Zjets"]       = TFile::Open((inputdir+"hists_FF_Zjets_HFLF"+binScheme+controlSample+".root").c_str()) ;
+  // fileMap["ttbar"]       = new TFile((inputdir+"hists_FF_ttbar"+binScheme+controlSample+".root").c_str(),"READ");
+  // fileMap["TEST"]        = TFile::Open( (inputdir+"hists_FF_TEST"+binScheme+controlSample+".root").c_str());
+
+  cout << std::setprecision(2);
+  cout << std::fixed;
+
+  map<string,TFile*>::iterator ifile = fileMap.begin();
+  for ( ; ifile!=fileMap.end(); ++ifile)
+  {
+    string channel = ifile->first;
+    TFile *ftmp    = ifile->second;
+
+    cout << "Getting channel " << channel << "  from file " << ftmp->GetName() << endl;
+    pt_eta_centralmu_FF[channel] = (TH2F*) ftmp->Get("pt_eta_centralmu_FF")->Clone(("pt_eta_centralmu_FF"+channel).c_str());
+    pt_eta_forwmu_FF[channel]    = (TH2F*) ftmp->Get("pt_eta_forwmu_FF")->Clone(("pt_eta_forwmu_FF"+channel).c_str());
+    pt_eta_calomu_FF[channel]    = (TH2F*) ftmp->Get("pt_eta_calomu_FF")->Clone(("pt_eta_calomu_FF"+channel).c_str());
+    pt_eta_centralel_FF[channel] = (TH2F*) ftmp->Get("pt_eta_centralel_FF")->Clone(("pt_eta_centralel_FF_"+channel).c_str());
+
+    pt_centralmu_FF[channel] = (TH1F*) (ftmp->Get("pt_centralmu_FF"))->Clone(("pt_centralmu_FF"+channel).c_str());
+    pt_forwmu_FF[channel]    = (TH1F*) (ftmp->Get("pt_forwmu_FF"))   ->Clone(("pt_forwmu_FF"+channel).c_str());
+    pt_calomu_FF[channel]    = (TH1F*) (ftmp->Get("pt_calomu_FF"))   ->Clone(("pt_calomu_FF"+channel).c_str());
+    pt_centralel_FF[channel] = (TH1F*) (ftmp->Get("pt_centralel_FF"))->Clone(("pt_centralel_FF"+channel).c_str());
+
+    eta_centralmu_FF[channel] = (TH1F*) (ftmp->Get("eta_centralmu_FF"))->Clone(("eta_centralmu_FF"+channel).c_str());
+    eta_forwmu_FF[channel]    = (TH1F*) (ftmp->Get("eta_forwmu_FF"))   ->Clone(("eta_forwmu_FF"+channel).c_str());
+    eta_calomu_FF[channel]    = (TH1F*) (ftmp->Get("eta_calomu_FF"))   ->Clone(("eta_calomu_FF"+channel).c_str());
+    eta_centralel_FF[channel] = (TH1F*) (ftmp->Get("eta_centralel_FF"))->Clone(("eta_centralel_FF"+channel).c_str());
+  }
 
 
-  TCanvas c2("c2","c2");
+  TCanvas c1("c1","c1");
   TLatex t1; t1.SetNDC();
   t1.SetTextColor(1);
   t1.SetTextSize(0.04);
 
-  pt_eta_mu_FF[0][0]->Draw("colz");
-  pt_eta_mu_FF[0][0]->GetXaxis()->SetRangeUser(6,200);
-  pt_eta_mu_FF[0][0]->GetYaxis()->SetRangeUser(0,2.7);
-  pt_eta_mu_FF[0][0]->GetXaxis()->SetTitle("p_{T}");
-  pt_eta_mu_FF[0][0]->GetYaxis()->SetTitle("#eta");
-  pt_eta_mu_FF[0][0]->GetZaxis()->SetRangeUser(0.0,0.5);
-  t1.DrawLatex(0.4,0.94,"central muon fake factor");
-  c2.SaveAs((outdir+"ff_mu_pteta_central.pdf").c_str());
+  map<string,TH2F*>::iterator iplot = pt_eta_centralmu_FF.begin();
+  for ( ; iplot!=pt_eta_centralmu_FF.end();iplot++)
+  {
+    string channel = iplot->first;
+    cout << "Plotting channel : " << channel << endl;
+    pt_eta_centralmu_FF[channel]->SetMarkerSize(0.9);
+    pt_eta_centralmu_FF[channel]->Draw("colztexte");
+    pt_eta_centralmu_FF[channel]->GetXaxis()->SetRangeUser(6,200);
+    pt_eta_centralmu_FF[channel]->GetYaxis()->SetRangeUser(0,2.5);
+    pt_eta_centralmu_FF[channel]->GetXaxis()->SetTitle("p_{T}");
+    pt_eta_centralmu_FF[channel]->GetYaxis()->SetTitle("#eta");
+    pt_eta_centralmu_FF[channel]->GetZaxis()->SetRangeUser(0.0,0.5);
+    pt_eta_centralmu_FF[channel]->GetZaxis()->SetLabelSize(0.03);
+    t1.DrawLatex(0.4,0.96,"central muon fake factor");
+    c1.SaveAs((outdir+"ff_mu_pteta_central"+binScheme+controlSample+"_"+channel+".pdf").c_str());
+    c1.Clear();
 
-  pt_eta_mu_FF[1][0]->Draw("colz");
-  pt_eta_mu_FF[1][0]->GetXaxis()->SetRangeUser(6,200);
-  pt_eta_mu_FF[1][0]->GetYaxis()->SetRangeUser(2.5,2.7);
-  pt_eta_mu_FF[1][0]->GetXaxis()->SetTitle("p_{T}");
-  pt_eta_mu_FF[1][0]->GetYaxis()->SetTitle("#eta");
-  pt_eta_mu_FF[1][0]->GetZaxis()->SetRangeUser(0.0,3.0);
-  t1.DrawLatex(0.4,0.94,"fwd muon fake factor");
-  c2.SaveAs((outdir+"ff_mu_pteta_fwd.pdf").c_str());
+    // pt_eta_forwmu_FF[channel]->SetMarkerSize(0.8);
+    // pt_eta_forwmu_FF[channel]->Draw("colztexte");
+    // pt_eta_forwmu_FF[channel]->GetXaxis()->SetRangeUser(6,200);
+    // pt_eta_forwmu_FF[channel]->GetYaxis()->SetRangeUser(2.5,2.7);
+    // pt_eta_forwmu_FF[channel]->GetXaxis()->SetTitle("p_{T}");
+    // pt_eta_forwmu_FF[channel]->GetYaxis()->SetTitle("#eta");
+    // pt_eta_forwmu_FF[channel]->GetZaxis()->SetRangeUser(0.0,3.0);
+    // t1.DrawLatex(0.4,0.94,"fwd muon fake factor");
+    // c1.SaveAs((outdir+"ff_mu_pteta_fwd"+binScheme+controlSample+"_"+channel+".pdf").c_str());
+    // c1.Clear();
 
-  pt_eta_mu_FF[2][0]->Draw("colz");
-  pt_eta_mu_FF[2][0]->GetXaxis()->SetRangeUser(15,200);
-  pt_eta_mu_FF[2][0]->GetYaxis()->SetRangeUser(0.0,0.1);
-  pt_eta_mu_FF[2][0]->GetXaxis()->SetTitle("p_{T}");
-  pt_eta_mu_FF[2][0]->GetYaxis()->SetTitle("#eta");
-  pt_eta_mu_FF[2][0]->GetZaxis()->SetRangeUser(0.0,0.15);
-  t1.DrawLatex(0.4,0.94,"calo muon fake factor");
-  c2.SaveAs((outdir+"ff_mu_pteta_calo.pdf").c_str());
+    // pt_eta_calomu_FF[channel]->SetMarkerSize(0.8);
+    // pt_eta_calomu_FF[channel]->Draw("colztexte");
+    // pt_eta_calomu_FF[channel]->GetXaxis()->SetRangeUser(15,200);
+    // pt_eta_calomu_FF[channel]->GetYaxis()->SetRangeUser(0.0,0.1);
+    // pt_eta_calomu_FF[channel]->GetXaxis()->SetTitle("p_{T}");
+    // pt_eta_calomu_FF[channel]->GetYaxis()->SetTitle("#eta");
+    // pt_eta_calomu_FF[channel]->GetZaxis()->SetRangeUser(0.0,0.15);
+    // t1.DrawLatex(0.4,0.94,"calo muon fake factor");
+    // c1.SaveAs((outdir+"ff_mu_pteta_calo"+binScheme+controlSample+"_"+channel+".pdf").c_str());
+    // c1.Clear();
 
-  pt_eta_el_FF[0][0]->Draw("colz");
-  pt_eta_el_FF[0][0]->GetXaxis()->SetRangeUser(7,200);
-  pt_eta_el_FF[0][0]->GetYaxis()->SetRangeUser(0,2.47);
-  pt_eta_el_FF[0][0]->GetXaxis()->SetTitle("p_{T}");
-  pt_eta_el_FF[0][0]->GetYaxis()->SetTitle("#eta");
-  pt_eta_el_FF[0][0]->GetZaxis()->SetRangeUser(0.0,0.1);
-  t1.DrawLatex(0.4,0.94,"central electron fake factor");
-  c2.SaveAs((outdir+"ff_el_pteta.pdf").c_str());
+    pt_eta_centralel_FF[channel]->SetMarkerSize(0.9);
+    pt_eta_centralel_FF[channel]->Draw("colztexte");
+    pt_eta_centralel_FF[channel]->GetXaxis()->SetRangeUser(7,200);
+    pt_eta_centralel_FF[channel]->GetYaxis()->SetRangeUser(0,2.47);
+    pt_eta_centralel_FF[channel]->GetXaxis()->SetTitle("p_{T}");
+    pt_eta_centralel_FF[channel]->GetYaxis()->SetTitle("#eta");
+    Double_t zup =0.2;
+    if (channel=="ZjetsAlpgenHF") zup = 0.7;
+    // if (controlSample=="_ttbarcs") zup = 0.27;
+    pt_eta_centralel_FF[channel]->GetZaxis()->SetRangeUser(0.0,zup);
+    pt_eta_centralel_FF[channel]->GetZaxis()->SetLabelSize(0.03);
+    t1.DrawLatex(0.4,0.96,"central electron fake factor");
+    c1.SaveAs((outdir+"ff_el_pteta"+binScheme+controlSample+"_"+channel+".pdf").c_str());
+    c1.Clear();
+  }
 
-
-  TCanvas c1("c1","c1");
+  //-------------------------------------------------------------------------------------------------
+  TCanvas c2("c2","c2");
   TLegend *leg = new TLegend(0.2,0.77,0.8,0.92);
   leg->SetShadowColor(0);
   leg->SetBorderSize(0);
@@ -120,136 +173,234 @@
   leg->SetFillStyle(0);
   leg->SetLineWidth(0);
   TLatex t; t.SetNDC(); t.SetTextColor(1);
-
-  //////////////muon eta
-  //DATA
-  //--------central
-  eta_mu_FF[0][0]->GetXaxis()->SetRangeUser(0,2.7);
-  eta_mu_FF[0][0]->GetYaxis()->SetRangeUser(0,3);
-  eta_mu_FF[0][0]->SetXTitle("#eta");
-  eta_mu_FF[0][0]->DrawCopy("e");
+  t.SetTextSize(0.04);
 
 
-  //--------forward
-  if (nmutypes>1) {
-    // eta_mu_FF[1][0]->SetLineColor(kRed+1);
-    // eta_mu_FF[1][0]->SetMarkerColor(kRed+1);
-    eta_mu_FF[1][0]->SetMarkerStyle(21);
-    eta_mu_FF[1][0]->DrawCopy("esame");
-    //--------calo
-    if (nmutypes>2) {
-      //eta_mu_FF[2][0]->SetLineColor(kRed+1);
-      //eta_mu_FF[2][0]->SetMarkerColor(kRed+1);
-      eta_mu_FF[2][0]->SetMarkerStyle(22);
-      eta_mu_FF[2][0]->DrawCopy("esame");
+  ///***********************  eta central muon  ***************************///
+  cout << "- Plotting Muon Eta FF" << endl;
+  bool isFirst = true;
+  map<string,TH1F*>::iterator iplot_eta = eta_centralmu_FF.begin();
+  for ( ; iplot_eta!=eta_centralmu_FF.end();iplot_eta++)
+  {
+    string channel = iplot_eta->first;
+    cout << " Muon Eta FF for channel " << channel << endl;
+    if (isFirst)
+    {
+      eta_centralmu_FF[channel]->GetXaxis()->SetRangeUser(0,2.7);
+      eta_centralmu_FF[channel]->GetYaxis()->SetRangeUser(0,2);
+      eta_centralmu_FF[channel]->SetXTitle("#eta");
+      eta_centralmu_FF[channel]->DrawCopy("e");
+
+      isFirst=false;
     }
-  }
-  //MC
-  for (int itype=0;itype<nmutypes;itype++) { //central,forw,calo
-    for (int imc=1;imc<=2;imc++) {   //sherpa, powheg
-      eta_mu_FF[itype][imc]->SetMarkerSize(0);
-      eta_mu_FF[itype][imc]->SetLineColor( ((imc==1)? kBlue : kRed) );
-      if (itype==2)
-       eta_mu_FF[itype][imc]->SetLineStyle(kDashed);
-      // eta_mu_FF[itype][imc]->DrawCopy("histesame");
-      eta_mu_FF[itype][imc]->DrawCopy("esame");
-    }
-  }
-  for (int i=0;i<nmutypes;i++) eta_mu_FF[i][0]->DrawCopy("esame"); //redraw data point
+    else
+    {
+      if (channel !="DATA"){
+        eta_centralmu_FF[channel]->SetMarkerSize(0);
+        eta_centralmu_FF[channel]->SetLineColor(getLineColor(channel));
 
-  leg->AddEntry(eta_mu_FF[0][0],"data","l");
-  leg->AddEntry(eta_mu_FF[0][1],"simulation (Alpgen Z+jets)","l");
-  leg->AddEntry(eta_mu_FF[0][2],"simulation (Sherpa Z+jets)","l");
+      }
+      eta_centralmu_FF[channel]->SetMarkerStyle(21);
+      eta_centralmu_FF[channel]->DrawCopy("esame");
+    }
+
+    leg->AddEntry(eta_centralmu_FF[channel],channel.c_str(),"l");
+
+  }
+
   leg->Draw();
-  t.DrawLatex(0.45,0.96,"central and forward muons");
-  c1.SaveAs((outdir+"ff_mu_eta.pdf").c_str());
-
-  /////////////muon pt
-  //central - DATA
-  pt_mu_FF[0][0]->GetYaxis()->SetRangeUser(0,0.5);
-  pt_mu_FF[0][0]->SetXTitle("p_{T} [GeV]");
-  pt_mu_FF[0][0]->DrawCopy("e");
-  //central - MC
-  for (int imc=1;imc<=2;imc++) {   //sherpa, powheg
-    pt_mu_FF[0][imc]->SetMarkerSize(0);
-    pt_mu_FF[0][imc]->SetLineColor( ((imc==1)? kBlue : kRed) );
-    // pt_mu_FF[0][imc]->DrawCopy("histesame");
-    pt_mu_FF[0][imc]->DrawCopy("esame");
-  }
-  pt_mu_FF[0][0]->DrawCopy("esame");
   t.DrawLatex(0.45,0.96,"central muons");
+  c2.SaveAs((outdir+"ff_mu_eta"+binScheme+controlSample+".pdf").c_str());
+
+
+  c2.Clear();
+  leg->Clear();
+  ///***********************  pt muon  ***************************///
+  isFirst = true;
+  map<string,TH1F*>::iterator iplot_pt = pt_centralmu_FF.begin();
+  for ( ; iplot_pt!=pt_centralmu_FF.end();iplot_pt++)
+  {
+    string channel = iplot_pt->first;
+    if (isFirst)
+    {
+      pt_centralmu_FF[channel]->GetYaxis()->SetRangeUser(0,1);
+      pt_centralmu_FF[channel]->SetXTitle("p_{T} [GeV]");
+      pt_centralmu_FF[channel]->DrawCopy("e");
+      isFirst=false;
+    }
+    else
+    {
+      if (channel !="DATA"){
+        pt_centralmu_FF[channel]->SetMarkerSize(0);
+        pt_centralmu_FF[channel]->SetLineColor(getLineColor(channel));
+      }
+      pt_centralmu_FF[channel]->SetMarkerStyle(21);
+      pt_centralmu_FF[channel]->DrawCopy("esame");
+    }
+
+    leg->AddEntry(pt_centralmu_FF[channel],channel.c_str(),"l");
+
+  }
+
   leg->Draw();
-  c1.SaveAs((outdir+"ff_mu_pt.pdf").c_str());
+  t.DrawLatex(0.45,0.96,"central muons");
+  c2.SaveAs((outdir+"ff_mu_pt"+binScheme+controlSample+".pdf").c_str());
 
-  //forward - DATA
-  if (nmutypes>1) {
-    pt_mu_FF[1][0]->GetYaxis()->SetRangeUser(0,18);
-    pt_mu_FF[1][0]->SetXTitle("p_{T} [GeV]");
-    pt_mu_FF[1][0]->DrawCopy("e");
-    //forward - MC
-    for (int imc=1;imc<=2;imc++) {   //sherpa, powheg
-      pt_mu_FF[1][imc]->SetMarkerSize(0);
-      pt_mu_FF[1][imc]->SetLineColor( ((imc==1)? kBlue : kRed) );
-      // pt_mu_FF[1][imc]->DrawCopy("histesame");
-      pt_mu_FF[1][imc]->DrawCopy("esame");
+  ///***********************  pt Fwd muon  ***************************///
+  c2.Clear();
+  leg->Clear();
+  isFirst = true;
+  iplot_pt = pt_forwmu_FF.begin();
+  for ( ; iplot_pt!=pt_forwmu_FF.end();iplot_pt++)
+  {
+    string channel = iplot_pt->first;
+    if (isFirst)
+    {
+      double yup = 4;
+      if (controlSample=="_ttbarcs") yup = 2;
+      pt_forwmu_FF[channel]->GetYaxis()->SetRangeUser(0,yup);
+      pt_forwmu_FF[channel]->SetXTitle("p_{T} [GeV]");
+      pt_forwmu_FF[channel]->DrawCopy("e");
+      isFirst=false;
     }
-    pt_mu_FF[1][0]->DrawCopy("esame");
-    t.DrawLatex(0.45,0.96,"forward muons");
-    leg->Draw();
-    c1.SaveAs((outdir+"ff_forwmu_pt.pdf").c_str());
+    else
+    {
+      if (channel !="DATA"){
+        pt_forwmu_FF[channel]->SetMarkerSize(0);
+        pt_forwmu_FF[channel]->SetLineColor(getLineColor(channel));
+      }
+      pt_forwmu_FF[channel]->SetMarkerStyle(21);
+      pt_forwmu_FF[channel]->DrawCopy("esame");
+    }
+
+    leg->AddEntry(pt_forwmu_FF[channel],channel.c_str(),"l");
+
   }
 
-  //calo - DATA
-  if (nmutypes>2) {
-    pt_mu_FF[2][0]->GetYaxis()->SetRangeUser(0,1.0);
-    pt_mu_FF[2][0]->SetXTitle("p_{T} [GeV]");
-    pt_mu_FF[2][0]->DrawCopy("e");
-    //calo - MC
-    for (int imc=1;imc<=2;imc++) {   //sherpa, powheg
-      pt_mu_FF[2][imc]->SetMarkerSize(0);
-      pt_mu_FF[2][imc]->SetLineColor( ((imc==1)? kBlue : kRed) );
-      pt_mu_FF[2][imc]->DrawCopy("esame");
+  leg->Draw();
+  t.DrawLatex(0.45,0.96,"fowrward muons");
+  c2.SaveAs((outdir+"ff_forwmu_pt"+binScheme+controlSample+".pdf").c_str());
+
+  ///***********************  pt Calo muon  ***************************///
+  c2.Clear();
+  leg->Clear();
+  isFirst = true;
+  iplot_pt = pt_calomu_FF.begin();
+  for ( ; iplot_pt!=pt_calomu_FF.end();iplot_pt++)
+  {
+    string channel = iplot_pt->first;
+    if (isFirst)
+    {
+      double yup = 0.4;
+      if (controlSample=="_ttbarcs") yup = 1.4;
+      pt_calomu_FF[channel]->GetYaxis()->SetRangeUser(0,yup);
+      pt_calomu_FF[channel]->SetXTitle("p_{T} [GeV]");
+      pt_calomu_FF[channel]->DrawCopy("e");
+      isFirst=false;
     }
-    pt_mu_FF[2][0]->DrawCopy("esame");
-    t.DrawLatex(0.45,0.96,"calo muons");
-    leg->Draw();
-    c1.SaveAs((outdir+"ff_calomu_pt.pdf").c_str());
+    else
+    {
+      if (channel !="DATA"){
+        pt_calomu_FF[channel]->SetMarkerSize(0);
+        pt_calomu_FF[channel]->SetLineColor(getLineColor(channel));
+      }
+      pt_calomu_FF[channel]->SetMarkerStyle(21);
+      pt_calomu_FF[channel]->DrawCopy("esame");
+    }
+
+    leg->AddEntry(pt_calomu_FF[channel],channel.c_str(),"l");
+
   }
 
-  //////////electron eta
-  //DATA
-  //----central
-  eta_el_FF[0][0]->GetYaxis()->SetRangeUser(0,0.3);
-  eta_el_FF[0][0]->SetXTitle("#eta");
-  eta_el_FF[0][0]->DrawCopy("e");
+  leg->Draw();
+  t.DrawLatex(0.45,0.96,"calo muons");
+  c2.SaveAs((outdir+"ff_calomu_pt"+binScheme+controlSample+".pdf").c_str());
 
-    //MC
-    for (int imc=1;imc<=2;imc++) {   //sherpa, powheg
-      eta_el_FF[0][imc]->SetMarkerSize(0);
-      eta_el_FF[0][imc]->SetLineColor( ((imc==1)? kBlue : kRed) );
-      eta_el_FF[0][imc]->DrawCopy("histesame");
+
+  c2.Clear();
+  leg->Clear();
+  ///***********************  eta electron  ***************************///
+  isFirst = true;
+  iplot_eta = eta_centralel_FF.begin();
+  for ( ; iplot_eta!=eta_centralel_FF.end();iplot_eta++)
+  {
+    string channel = iplot_eta->first;
+    if (isFirst)
+    {
+      eta_centralel_FF[channel]->GetXaxis()->SetRangeUser(0,2.47);
+      eta_centralel_FF[channel]->GetYaxis()->SetRangeUser(0,0.25);
+      eta_centralel_FF[channel]->SetXTitle("#eta");
+      eta_centralel_FF[channel]->DrawCopy("e");
+      isFirst=false;
     }
-    eta_el_FF[0][0]->DrawCopy("esame");
+    else
+    {
+      if (channel !="DATA"){
+        eta_centralel_FF[channel]->SetMarkerSize(0);
+        eta_centralel_FF[channel]->SetLineColor(getLineColor(channel));
+      }
+      eta_centralel_FF[channel]->SetMarkerStyle(21);
+      eta_centralel_FF[channel]->DrawCopy("esame");
+    }
 
-    leg->Draw();
-    t.DrawLatex(0.4,0.96,"central electrons");
-    c1.SaveAs((outdir+"ff_el_eta.pdf").c_str());
+    leg->AddEntry(eta_centralel_FF[channel],channel.c_str(),"l");
 
-  /////////////electron pt
-  //DATA
-  //----central
-  pt_el_FF[0][0]->GetYaxis()->SetRangeUser(0,0.12);
-  pt_el_FF[0][0]->SetXTitle("p_{T} [GeV]");
-  pt_el_FF[0][0]->DrawCopy("e");
-  //MC
-  for (int imc=1;imc<=2;imc++) {   //sherpa, powheg
-    pt_el_FF[0][imc]->SetMarkerSize(0);
-    pt_el_FF[0][imc]->SetLineColor(((imc==1)? kBlue : kRed));
-    pt_el_FF[0][imc]->DrawCopy("histesame");
   }
-  pt_el_FF[0][0]->DrawCopy("esame");
+
+  eta_centralel_FF["DATA"]->DrawCopy("esame"); //redraw data point
+
   leg->Draw();
   t.DrawLatex(0.45,0.96,"central electrons");
-  c1.SaveAs((outdir+"ff_el_pt.pdf").c_str());
+  c2.SaveAs((outdir+"ff_el_eta"+binScheme+controlSample+".pdf").c_str());
 
+
+  c2.Clear();
+  leg->Clear();
+  ///***********************  pt electron  ***************************///
+  isFirst = true;
+  iplot_pt = pt_centralel_FF.begin();
+  for ( ; iplot_pt!=pt_centralel_FF.end();iplot_pt++)
+  {
+    string channel = iplot_pt->first;
+    if (isFirst)
+    {
+      double yup = 0.8;
+      if (controlSample=="_ttbarcs") yup = 0.6;
+      pt_centralel_FF[channel]->GetYaxis()->SetRangeUser(0,yup);
+      pt_centralel_FF[channel]->SetXTitle("p_{T} [GeV]");
+      pt_centralel_FF[channel]->DrawCopy("e");
+      isFirst=false;
+    }
+    else
+    {
+      if (channel !="DATA"){
+        pt_centralel_FF[channel]->SetMarkerSize(0);
+        pt_centralel_FF[channel]->SetLineColor(getLineColor(channel));
+      }
+      pt_centralel_FF[channel]->SetMarkerStyle(21);
+      pt_centralel_FF[channel]->DrawCopy("esame");
+    }
+
+    leg->AddEntry(pt_centralel_FF[channel],channel.c_str(),"l");
+
+  }
+
+  // pt_centralel_FF["DATA"]->DrawCopy("esame"); //redraw data point
+
+  leg->Draw();
+  t.DrawLatex(0.45,0.96,"central electrons");
+  c2.SaveAs((outdir+"ff_el_pt"+binScheme+controlSample+".pdf").c_str());
+
+ }
+
+int getLineColor(string channel)
+{
+  if (channel=="DATA") return kBlack;
+  else if (channel=="ZjetsSherpa") return kRed;
+  else if (channel=="Zjets") return 4;
+  else if (channel=="ZjetsAlpgenHF") return kBlue;
+  else if (channel=="ZjetsAlpgenLF") return kGreen;
+  else if (channel=="TEST") return 3;
+
+  return 4;
 }
